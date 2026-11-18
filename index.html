@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XO ARENA</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:25px 15px;
+ background:#080d19;color:white;
+ font-family:Arial,sans-serif;text-align:center;
+}
+h1{color:#35d9ff;font-size:36px;margin:15px}
+.panel{
+ max-width:390px;margin:20px auto;padding:22px;
+ background:#151f33;border:1px solid #293b5b;
+ border-radius:22px;
+}
+select,button{
+ padding:13px 18px;border:0;border-radius:12px;
+ font-size:16px;margin:7px;
+}
+select{background:#263753;color:white}
+button{background:#35d9ff;color:#07111c;font-weight:bold}
+.board{
+ display:grid;grid-template-columns:repeat(3,1fr);
+ gap:10px;max-width:300px;margin:22px auto;
+}
+.cell{
+ height:90px;background:#263753;border-radius:15px;
+ display:grid;place-items:center;font-size:48px;
+ font-weight:bold;cursor:pointer;
+}
+.x{color:#35d9ff}
+.o{color:#ff668b}
+#status{font-size:18px;min-height:25px}
+</style>
+</head>
+<body>
+<h1>⚡ XO ARENA</h1>
+<div class="panel">
+<h2>🤖 BOT BILAN O‘YNASH</h2>
+<p>Qiyinlik darajasini tanlang</p>
+<select id="level">
+<option value="easy">🟢 Oson</option>
+<option value="medium">🟡 O‘rta</option>
+<option value="hard">🔴 Qiyin</option>
+</select>
+<p id="status">Sizning navbatingiz 🔵 X</p>
+<div class="board" id="board"></div>
+<button onclick="restart()">🔄 Qayta boshlash</button>
+</div>
+
+<script>
+let cells=Array(9).fill("");
+let over=false;
+let busy=false;
+
+const lines=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+function winner(p){
+ return lines.some(l=>l.every(i=>cells[i]===p));
+}
+
+function draw(){
+ const board=document.getElementById("board");
+ board.innerHTML="";
+ cells.forEach((v,i)=>{
+  const d=document.createElement("div");
+  d.className="cell "+(v==="X"?"x":v==="O"?"o":"");
+  d.textContent=v==="X"?"🔵":v==="O"?"🟠":"";
+  d.onclick=()=>play(i);
+  board.appendChild(d);
+ });
+}
+
+function check(){
+ if(winner("X")){
+  over=true;status.textContent="🏆 Siz g‘alaba qozondingiz!";
+ }else if(winner("O")){
+  over=true;status.textContent="🤖 Bot g‘alaba qozondi!";
+ }else if(cells.every(Boolean)){
+  over=true;status.textContent="🤝 Durang!";
+ }
+ return over;
+}
+
+function find(p){
+ for(let i=0;i<9;i++){
+  if(!cells[i]){
+   cells[i]=p;
+   let w=winner(p);
+   cells[i]="";
+   if(w)return i;
+  }
+ }
+ return -1;
+}
+
+function score(){
+ if(winner("O"))return 10;
+ if(winner("X"))return -10;
+ if(cells.every(Boolean))return 0;
+ return null;
+}
+
+function minimax(turn){
+ let s=score();
+ if(s!==null)return s;
+ let scores=[];
+ for(let i=0;i<9;i++){
+  if(!cells[i]){
+   cells[i]=turn;
+   scores.push(minimax(turn==="O"?"X":"O"));
+   cells[i]="";
+  }
+ }
+ return turn==="O"?Math.max(...scores):Math.min(...scores);
+}
+
+function botMove(){
+ if(over)return;
+ let available=cells.map((v,i)=>v===""?i:-1).filter(i=>i>=0);
+ if(!available.length)return;
+ let level=document.getElementById("level").value;
+ let move;
+
+ if(level==="easy"){
+  move=available[Math.floor(Math.random()*available.length)];
+ }else if(level==="medium"){
+  move=find("O");
+  if(move<0)move=find("X");
+  if(move<0)move=available[Math.floor(Math.random()*available.length)];
+ }else{
+  let best=-Infinity;
+  for(let i of available){
+   cells[i]="O";
+   let s=minimax("X");
+   cells[i]="";
+   if(s>best){best=s;move=i;}
+  }
+ }
+ cells[move]="O";
+ draw();
+ if(!check())status.textContent="Sizning navbatingiz 🔵 X";
+ busy=false;
+}
+
+function play(i){
+ if(over||busy||cells[i])return;
+ cells[i]="X";
+ draw();
+ if(check())return;
+ busy=true;
+ status.textContent="🤖 Bot o‘ylayapti...";
+ setTimeout(botMove,350);
+}
+
+function restart(){
+ cells=Array(9).fill("");
+ over=false;busy=false;
+ status.textContent="Sizning navbatingiz 🔵 X";
+ draw();
+}
+
+draw();
+</script>
+</body>
+</html>
