@@ -1,1 +1,10 @@
-# my-first-project
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mening saytim</title>
+</head>
+<body>
+<h1>Salom dunyo!</h1>
+<p>Bu mening birinchi saytim.</p>
+</body>
+</html># my-first-project
